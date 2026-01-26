@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YAIG - Yet another Icon Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Emoji:wght@300..700&display=block" rel="preload" as="style">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Emoji:wght@300..700&display=block" rel="stylesheet">
+  <script type="module" crossorigin src="/icon-generator/assets/index-Cz1KNue1.js"></script>
+  <link rel="stylesheet" crossorigin href="/icon-generator/assets/index-D3FEXAx-.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-links">
+        <button id="theme-toggle" class="icon-button" title="Toggle Dark Mode" aria-label="Toggle Dark Mode">
+          <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+        <a href="https://github.com/markusmo3/icon-generator" target="_blank" rel="noopener noreferrer" title="GitHub Repository">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+          </svg>
+        </a>
+      </div>
+      <h1>Yet Another Icon Generator</h1>
+    </header>
+
+    <div class="main-content">
+      <aside class="sidebar">
+        <!-- Controls are now generated automatically by the parameter framework -->
+      </aside>
+
+      <div class="preview-section">
+        <div class="preview-area">
+          <h2>Preview</h2>
+          <div class="preview-canvases">
+            <div class="canvas-container main">
+              <div id="preview-512" class="preview-svg"></div>
+              <span class="canvas-label">512×512</span>
+            </div>
+            <div class="canvas-container-row">
+              <div class="canvas-container">
+                <div id="preview-64" class="preview-svg"></div>
+                <span class="canvas-label">64×64</span>
+              </div>
+              <div class="canvas-container">
+                <div id="preview-32" class="preview-svg"></div>
+                <span class="canvas-label">32×32</span>
+              </div>
+              <div class="canvas-container">
+                <div id="preview-24" class="preview-svg"></div>
+                <span class="canvas-label">24×24</span>
+              </div>
+              <div class="canvas-container">
+                <div id="preview-16" class="preview-svg"></div>
+                <span class="canvas-label">16×16</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="download-panel">
+          <h2>Download</h2>
+          <div class="download-buttons">
+            <div class="button-grid">
+              <button class="download-btn" data-format="png" data-size="16">16×16</button>
+              <button class="download-btn" data-format="png" data-size="24">24×24</button>
+              <button class="download-btn" data-format="png" data-size="32">32×32</button>
+              <button class="download-btn" data-format="png" data-size="64">64×64</button>
+              <button class="download-btn" data-format="png" data-size="128">128×128</button>
+              <button class="download-btn" data-format="png" data-size="256">256×256</button>
+              <button class="download-btn" data-format="png" data-size="512">512×512</button>
+              <button class="download-btn svg-btn" data-format="svg">SVG</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Icon Selector Modal -->
+  <div id="icon-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Select Icon</h2>
+        <button id="icon-modal-close" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label for="icon-search"></label><input type="text" id="icon-search" placeholder="Search icons...">
+        <div id="icon-grid" class="picker-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Emoji Selector Modal -->
+  <div id="emoji-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Select Emoji</h2>
+        <button id="emoji-modal-close" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label for="emoji-search"></label><input type="text" id="emoji-search" placeholder="Search emojis...">
+        <div id="emoji-grid" class="picker-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Color Picker Popup -->
+  <div id="color-picker-modal" class="modal hidden">
+    <div id="color-picker-container" class="color-picker-popup"></div>
+  </div>
+
+</body>
+</html>
