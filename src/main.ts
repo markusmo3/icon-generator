@@ -3,7 +3,7 @@ import {IconRenderer} from './renderer';
 import {IconExporter} from './exporter';
 import {IconConfig} from './types';
 import {getAllIcons, IconData, searchIcons} from './icons';
-import {getInitialConfig, initializeFontOptions, PARAMETERS, updateURL} from './parameters';
+import {buildDefaultConfig, getInitialConfig, initializeFontOptions, PARAMETERS, updateURL} from './parameters';
 import {ParameterUIBuilder} from './ui-builder';
 import emojisData from 'emojibase-data/en/data.json';
 import '../index.css';
@@ -64,11 +64,17 @@ class IconGeneratorApp {
       this.addIconSelectorControl(sidebar);
       // Add emoji selector button
       this.addEmojiSelectorControl(sidebar);
+
+      // Update visibility of selectors based on initial config
+      this.updateIconSelectorState();
+      this.updateEmojiSelectorState();
     }
 
     this.initDownloadButtons();
     this.initIconModal();
     this.initEmojiModal();
+    this.initConfigModal();
+    this.initResetButton();
 
     // Load icons asynchronously
     this.allIcons = await getAllIcons();
@@ -101,6 +107,7 @@ class IconGeneratorApp {
     const button = document.createElement('button');
     button.id = 'icon-select-btn';
     button.type = 'button';
+    button.className = 'outline-button'
     button.textContent = 'Select Icon';
 
     controlGroup.appendChild(label);
@@ -135,6 +142,7 @@ class IconGeneratorApp {
     const button = document.createElement('button');
     button.id = 'emoji-select-btn';
     button.type = 'button';
+    button.className = 'outline-button';
     button.textContent = 'Select Emoji';
 
     controlGroup.appendChild(label);
@@ -145,11 +153,31 @@ class IconGeneratorApp {
   }
 
   private updateIconSelectorState(): void {
-    // All controls are always enabled - no conditional disabling
+    const config = this.renderer.getConfig();
+    const iconSelectorControl = document.querySelector('[data-param-id="foreground.icon-selector"]') as HTMLElement;
+
+    if (iconSelectorControl) {
+      // Hide icon selector when foreground type is emoji or emoji-mono
+      if (config.foreground.type === 'icon') {
+        iconSelectorControl.style.display = '';
+      } else {
+        iconSelectorControl.style.display = 'none';
+      }
+    }
   }
 
   private updateEmojiSelectorState(): void {
-    // All controls are always enabled - no conditional disabling
+    const config = this.renderer.getConfig();
+    const emojiSelectorControl = document.querySelector('[data-param-id="foreground.emoji-selector"]') as HTMLElement;
+
+    if (emojiSelectorControl) {
+      // Hide emoji selector when foreground type is not emoji or emoji-mono
+      if (config.foreground.type === 'emoji' || config.foreground.type === 'emoji-mono') {
+        emojiSelectorControl.style.display = '';
+      } else {
+        emojiSelectorControl.style.display = 'none';
+      }
+    }
   }
 
   private initDownloadButtons(): void {
@@ -164,6 +192,8 @@ class IconGeneratorApp {
           this.exporter.exportPNG(parseInt(size));
         } else if (format === 'svg') {
           this.exporter.exportSVG();
+        } else if (format === 'favicon-pack') {
+          this.exporter.exportFaviconPack();
         }
       });
     });
@@ -257,7 +287,7 @@ class IconGeneratorApp {
       item.title = emojiItem.name; // Tooltip instead of text label
 
       item.addEventListener('click', () => {
-        this.selectEmoji(emojiItem.emoji, emojiItem.name);
+        this.selectEmoji(emojiItem.emoji);
         document.getElementById('emoji-modal')?.classList.add('hidden');
       });
 
@@ -265,11 +295,13 @@ class IconGeneratorApp {
     });
   }
 
-  private selectEmoji(emoji: string, name: string): void {
+  private selectEmoji(emoji: string): void {
     const config = this.renderer.getConfig();
     config.foreground.emoji = emoji;
-    config.foreground.emojiName = name;
     this.renderer.setConfig(config);
+
+    // Update URL to persist the selection
+    updateURL(config);
 
     this.updatePreviews();
   }
@@ -347,6 +379,10 @@ class IconGeneratorApp {
     const config = this.renderer.getConfig();
     config.foreground.iconName = icon.name;
     this.renderer.setConfig(config);
+
+    // Update URL to persist the selection
+    updateURL(config);
+
     this.updatePreviews();
   }
 
@@ -360,6 +396,99 @@ class IconGeneratorApp {
       { element: this.preview24, size: 24 },
       { element: this.preview16, size: 16 }
     ]);
+  }
+
+  private initConfigModal(): void {
+    const modal = document.getElementById('config-modal');
+    const openBtn = document.getElementById('config-toggle');
+    const closeBtn = document.getElementById('config-modal-close');
+    const textarea = document.getElementById('config-textarea') as HTMLTextAreaElement;
+    const applyBtn = document.getElementById('config-apply-btn');
+    const copyBtn = document.getElementById('config-copy-btn');
+    const resetBtn = document.getElementById('config-reset-btn');
+    const errorDiv = document.getElementById('config-error');
+
+    openBtn?.addEventListener('click', () => {
+      // Get current config and display as formatted JSON
+      const config = this.renderer.getConfig();
+      textarea.value = JSON.stringify(config, null, 2);
+      errorDiv!.style.display = 'none';
+      modal?.classList.remove('hidden');
+    });
+
+    closeBtn?.addEventListener('click', () => {
+      modal?.classList.add('hidden');
+    });
+
+    modal?.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.add('hidden');
+      }
+    });
+
+    applyBtn?.addEventListener('click', () => {
+      try {
+        const newConfig = JSON.parse(textarea.value);
+        this.renderer.setConfig(newConfig as IconConfig);
+        this.uiBuilder.updateConfig(newConfig);
+        updateURL(newConfig);
+        this.updatePreviews();
+        errorDiv!.style.display = 'none';
+        errorDiv!.textContent = '';
+      } catch (e) {
+        errorDiv!.style.display = 'block';
+        errorDiv!.textContent = `Error: ${(e as Error).message}`;
+      }
+    });
+
+    copyBtn?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(textarea.value);
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => {
+          copyBtn.textContent = originalText;
+        }, 2000);
+      } catch (e) {
+        errorDiv!.style.display = 'block';
+        errorDiv!.textContent = 'Failed to copy to clipboard';
+      }
+    });
+
+    resetBtn?.addEventListener('click', () => {
+      // Confirm with user before resetting
+      if (confirm('Reset to default settings? This will clear the current configuration.')) {
+        // Get default config
+        const defaultConfig = buildDefaultConfig();
+
+        // Update textarea to show default config
+        textarea.value = JSON.stringify(defaultConfig, null, 2);
+
+        // Update renderer and UI
+        this.renderer.setConfig(defaultConfig as IconConfig);
+        this.uiBuilder.updateConfig(defaultConfig);
+
+        // Update visibility states
+        this.updateIconSelectorState();
+        this.updateEmojiSelectorState();
+
+        // Remove URL parameter and update to clean URL
+        const url = new URL(window.location.href);
+        url.searchParams.delete('c');
+        window.history.replaceState({}, '', url.toString());
+
+        // Update previews
+        this.updatePreviews();
+
+        // Clear any errors
+        errorDiv!.style.display = 'none';
+        errorDiv!.textContent = '';
+      }
+    });
+  }
+
+  private initResetButton(): void {
+    // This method is no longer needed - reset is now in config modal
   }
 
   private initThemeToggle(): void {

@@ -65,7 +65,7 @@ export const PARAMETERS: Parameter[] = [
     label: 'Type',
     type: 'radio',
     group: 'Background',
-    defaultValue: 'solid',
+    defaultValue: 'linear-gradient',
     options: [
       { value: 'solid', label: 'Solid' },
       { value: 'transparent', label: 'Transparent' },
@@ -78,14 +78,15 @@ export const PARAMETERS: Parameter[] = [
     label: 'Color',
     type: 'color',
     group: 'Background',
-    defaultValue: '#4a90e2',
+    defaultValue: '#303F9F',
+    condition: (config) => config.background.type !== 'transparent',
   },
   {
     id: 'background.gradientColor',
     label: 'Gradient Color 2',
     type: 'color',
     group: 'Background',
-    defaultValue: '#357abd',
+    defaultValue: '#7986CB',
     condition: (config) => config.background.type.includes('gradient'),
   },
   {
@@ -96,7 +97,7 @@ export const PARAMETERS: Parameter[] = [
     defaultValue: 45,
     min: 0,
     max: 360,
-    step: 1,
+    step: 5,
     unit: '°',
     condition: (config) => config.background.type === 'linear-gradient',
   },
@@ -117,7 +118,7 @@ export const PARAMETERS: Parameter[] = [
     label: 'Border Radius',
     type: 'range',
     group: 'Background',
-    defaultValue: 0,
+    defaultValue: 10,
     min: 0,
     max: 50,
     step: 1,
@@ -143,25 +144,43 @@ export const PARAMETERS: Parameter[] = [
     label: 'Color',
     type: 'color',
     group: 'Foreground',
-    defaultValue: '#ffffff',
+    defaultValue: '#E0E0E0',
+    condition: (config) => config.foreground.type !== 'emoji',
   },
   {
     id: 'foreground.text',
     label: 'Text',
     type: 'text',
     group: 'Foreground',
-    defaultValue: 'A',
-    maxLength: 3,
-    condition: (config) => config.foreground.type !== 'icon',
+    defaultValue: 'YA\nIG',
+    maxLength: 10,
+    condition: (config) => config.foreground.type === 'text',
+  },
+  {
+    id: 'foreground.emoji',
+    label: 'Emoji',
+    type: 'text',
+    group: 'Foreground',
+    defaultValue: '🎨',
+    maxLength: 2,
+    condition: () => false, // Hidden - managed by emoji chooser button
+  },
+  {
+    id: 'foreground.iconName',
+    label: 'Icon Name',
+    type: 'text',
+    group: 'Foreground',
+    defaultValue: 'heart',
+    condition: () => false, // Hidden - managed by icon chooser button
   },
   {
     id: 'foreground.size',
     label: 'Size',
     type: 'range',
     group: 'Foreground',
-    defaultValue: 80,
+    defaultValue: 90,
     min: 20,
-    max: 100,
+    max: 150,
     step: 5,
     unit: '%',
   },
@@ -170,8 +189,64 @@ export const PARAMETERS: Parameter[] = [
     label: 'Font Family',
     type: 'select',
     group: 'Foreground',
-    defaultValue: 'sans-serif',
+    defaultValue: 'serif',
     options: [], // Will be populated dynamically from browser fonts
+    condition: (config) => config.foreground.type === 'text',
+  },
+  {
+    id: 'foreground.fontWeight',
+    label: 'Font Weight',
+    type: 'select',
+    group: 'Foreground',
+    defaultValue: 'bold',
+    options: [
+      { value: 'normal', label: 'Normal' },
+      { value: 'bold', label: 'Bold' },
+      { value: '100', label: 'Thin (100)' },
+      { value: '200', label: 'Extra Light (200)' },
+      { value: '300', label: 'Light (300)' },
+      { value: '400', label: 'Normal (400)' },
+      { value: '500', label: 'Medium (500)' },
+      { value: '600', label: 'Semi Bold (600)' },
+      { value: '700', label: 'Bold (700)' },
+      { value: '800', label: 'Extra Bold (800)' },
+      { value: '900', label: 'Black (900)' },
+    ],
+    condition: (config) => config.foreground.type === 'text',
+  },
+  {
+    id: 'foreground.fontStyle',
+    label: 'Font Style',
+    type: 'select',
+    group: 'Foreground',
+    defaultValue: 'normal',
+    options: [
+      { value: 'normal', label: 'Normal' },
+      { value: 'italic', label: 'Italic' },
+      { value: 'oblique', label: 'Oblique' },
+    ],
+    condition: (config) => config.foreground.type === 'text',
+  },
+  {
+    id: 'foreground.textDecoration',
+    label: 'Text Decoration',
+    type: 'select',
+    group: 'Foreground',
+    defaultValue: 'none',
+    options: [
+      { value: 'none', label: 'None' },
+      { value: 'underline', label: 'Underline' },
+      { value: 'overline', label: 'Overline' },
+      { value: 'line-through', label: 'Line Through' },
+    ],
+    condition: (config) => config.foreground.type === 'text',
+  },
+  {
+    id: 'foreground.monospace',
+    label: 'Monospace Mode',
+    type: 'checkbox',
+    group: 'Foreground',
+    defaultValue: true,
     condition: (config) => config.foreground.type === 'text',
   },
 ];
@@ -203,7 +278,14 @@ export function buildDefaultConfig(): any {
 // Encode config to URL-safe base64
 export function encodeConfigToURL(config: any): string {
   const json = JSON.stringify(config);
-  const base64 = btoa(json);
+  // Encode to UTF-8 first to handle emojis and other unicode characters
+  const utf8Bytes = new TextEncoder().encode(json);
+  // Convert bytes to binary string
+  let binaryString = '';
+  utf8Bytes.forEach(byte => {
+    binaryString += String.fromCharCode(byte);
+  });
+  const base64 = btoa(binaryString);
   // Make URL-safe
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
@@ -217,7 +299,15 @@ export function decodeConfigFromURL(encoded: string): any | null {
     while (base64.length % 4) {
       base64 += '=';
     }
-    const json = atob(base64);
+    // Decode base64 to binary string
+    const binaryString = atob(base64);
+    // Convert binary string to UTF-8 bytes
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    // Decode UTF-8 bytes to string
+    const json = new TextDecoder().decode(bytes);
     return JSON.parse(json);
   } catch (e) {
     console.error('Failed to decode config from URL:', e);
@@ -229,32 +319,18 @@ export function decodeConfigFromURL(encoded: string): any | null {
 export function getInitialConfig(): any {
   const urlParams = new URLSearchParams(window.location.search);
   const encoded = urlParams.get('c');
+  const defaultConfig = buildDefaultConfig();
 
   if (encoded) {
     const decoded = decodeConfigFromURL(encoded);
     if (decoded) {
-      return decoded;
+      // Merge decoded values over defaults, so URL parameters take precedence
+      const newConfig = {...defaultConfig, ...decoded};
+      updateURL(newConfig);
+      return newConfig;
     }
   }
-
-  // Good-looking defaults
-  return {
-    background: {
-      type: 'linear-gradient',
-      color: '#667eea',
-      gradientColor: '#764ba2',
-      gradientAngle: 135,
-      gradientSize: 50,
-      borderRadius: 20,
-    },
-    foreground: {
-      type: 'emoji',
-      color: '#ffffff',
-      text: '🎨',
-      size: 80,
-    },
-    palette: 'custom',
-  };
+  return defaultConfig;
 }
 
 // Update URL with current config

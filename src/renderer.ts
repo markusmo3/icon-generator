@@ -71,6 +71,7 @@ export class IconRenderer {
       // somehow emojis and text get cut off on fully transparent backgrounds in some browsers
       // this workaround prevents that
       svg += `<rect width="1" height="1" y="${size}" x="${size}" fill="#000000" fill-opacity="0.01" />`;
+      svg += `<rect width="1" height="1" y="0" x="0" fill="#000000" fill-opacity="0.01" />`;
     }
 
     // Add foreground
@@ -103,13 +104,134 @@ export class IconRenderer {
         textContent = text || ' ';
       }
 
-      // Calculate font size that fits within maxSize
-      const fontSize = this.calculateFontSize(textContent, maxSize, fontFamily);
+      // Split text by newlines
+      const lines = textContent.split('\n');
 
-      // Center position with better vertical alignment
-      const y = size / 2 + fontSize * 0.35;
+      // Check if monospace mode is enabled (but ignore it for emojis)
+      const monospaceMode = (this.config.foreground.monospace || false) && type === 'text';
 
-      return `<text x="50%" y="${y}" font-size="${fontSize}" fill="${color}" text-anchor="middle" font-family='${fontFamily}'>${this.escapeXml(textContent)}</text>`;
+      let fontSize: number;
+      let charWidth = 0;
+
+      if (monospaceMode) {
+        // In monospace mode, calculate optimal character width and font size together
+        const longestLineLength = Math.max(...lines.map(line => line.length));
+        const lineCount = lines.length;
+
+        if (longestLineLength > 0) {
+          // Character width is determined by dividing maxSize by longest line length
+          charWidth = maxSize / longestLineLength;
+
+          // Font size is constrained by:
+          // 1. Width: character width
+          // 2. Height: total text height must fit within maxSize
+
+          // For height calculation, we need to account for the actual text height
+          // Text height ≈ fontSize (line height when lineHeight = 1)
+          // Total height = lineCount * fontSize
+          const maxFontSizeByWidth = charWidth;
+          const maxFontSizeByHeight = maxSize / lineCount;
+
+          fontSize = Math.min(maxFontSizeByHeight, maxFontSizeByWidth);
+        } else {
+          fontSize = maxSize;
+        }
+      } else {
+        // Normal mode: Calculate font size for each line and take the smallest
+        const lineCount = lines.length;
+
+        // Start with a font size based on width constraints
+        fontSize = maxSize;
+        lines.forEach(line => {
+          if (line.trim()) {
+            const lineFontSize = this.calculateFontSize(line, maxSize, fontFamily);
+            fontSize = Math.min(fontSize, lineFontSize);
+          }
+        });
+
+        // Also constrain by vertical space
+        // Total height = lineCount * fontSize (since lineHeight = 1)
+        const maxFontSizeByHeight = maxSize / lineCount;
+        fontSize = Math.min(fontSize, maxFontSizeByHeight);
+      }
+
+      const lineHeight = fontSize;
+
+      const isEmoji = type === 'emoji' || type === 'emoji-mono';
+
+      // Build text element
+      if (monospaceMode && charWidth > 0) {
+        // In monospace mode, draw each character individually
+        let textElement = '';
+
+        // Calculate the actual text block dimensions
+        const totalTextHeight = lines.length * lineHeight;
+        const textBlockTop = (size - totalTextHeight) / 2;
+        const ascent = fontSize * 0.85;
+        const firstLineY = textBlockTop + ascent;
+
+        // Get text styling properties
+        const fontWeight = this.config.foreground.fontWeight || 'normal';
+        const fontStyle = this.config.foreground.fontStyle || 'normal';
+        const textDecoration = this.config.foreground.textDecoration || 'none';
+
+        lines.forEach((line, lineIndex) => {
+          const lineY = firstLineY + lineIndex * lineHeight;
+          const lineWidth = charWidth * line.length;
+          const startX = size / 2 - lineWidth / 2;
+
+          // Draw each character at exact positions
+          for (let charIndex = 0; charIndex < line.length; charIndex++) {
+            const char = line[charIndex];
+            const charX = startX + charIndex * charWidth + charWidth / 2;
+
+            textElement += `<text x="${charX}" y="${lineY}" font-size="${fontSize}" fill="${color}" text-anchor="middle" font-family='${fontFamily}' font-weight="${fontWeight}" font-style="${fontStyle}" text-decoration="${textDecoration}">${this.escapeXml(char)}</text>`;
+          }
+        });
+
+        return textElement;
+      } else if (isEmoji) {
+        // For emojis, use foreignObject with HTML for better rendering
+        // Center the foreignObject square in the canvas
+        const x = (size - maxSize) / 2;
+        const y = (size - maxSize) / 2;
+
+        // Remove quotes from fontFamily for inline style
+        const fontFamilyForStyle = fontFamily.replace(/"/g, '');
+
+        // Set line-height to ~93% of maxSize to compensate for text baseline offset
+        // This ensures the emoji appears vertically centered
+        const adjustedLineHeight = maxSize * 0.93;
+
+        let textElement = `<foreignObject x="${x}" y="${y}" width="${maxSize}" height="${maxSize}">`;
+
+        lines.forEach(line => {
+          textElement += `<div xmlns="http://www.w3.org/1999/xhtml" style="font-family:${fontFamilyForStyle};font-size:${fontSize}px;line-height:${adjustedLineHeight}px;color:${color};margin:0;padding:0;text-align:center;">${this.escapeXml(line)}</div>`;
+        });
+
+        textElement += `</foreignObject>`;
+        return textElement;
+      } else {
+        // For text, use standard SVG text with baseline calculations
+        const totalTextHeight = lines.length * lineHeight;
+        const textBlockTop = (size - totalTextHeight) / 2;
+        const ascent = fontSize * 0.85;
+        const firstLineY = textBlockTop + ascent;
+
+        const fontWeight = this.config.foreground.fontWeight || 'normal';
+        const fontStyle = this.config.foreground.fontStyle || 'normal';
+        const textDecoration = this.config.foreground.textDecoration || 'none';
+
+        let textElement = `<text x="50%" y="${firstLineY}" font-size="${fontSize}" fill="${color}" text-anchor="middle" font-family='${fontFamily}' font-weight="${fontWeight}" font-style="${fontStyle}" text-decoration="${textDecoration}">`;
+
+        lines.forEach((line, index) => {
+          const dy = index === 0 ? 0 : lineHeight;
+          textElement += `<tspan x="50%" dy="${dy}">${this.escapeXml(line)}</tspan>`;
+        });
+
+        textElement += '</text>';
+        return textElement;
+      }
     }
 
     if (type === 'icon' && iconName) {

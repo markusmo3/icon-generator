@@ -15,9 +15,12 @@ export interface IconConfig {
     color: string;
     text?: string;
     emoji?: string; // Selected emoji (separate from text)
-    emojiName?: string; // Name of the selected emoji
     iconName?: string; // Icon name to load SVG from
     size?: number; // Percentage of canvas size (inner margin)
     fontFamily?: string; // Font family for text rendering
+    fontWeight?: string; // Font weight (normal, bold, 100-900)
+    fontStyle?: string; // Font style (normal, italic, oblique)
+    textDecoration?: string; // Text decoration (none, underline, overline, line-through)
+    monospace?: boolean; // Force monospace character spacing
   };
 }
