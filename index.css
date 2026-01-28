@@ -51,11 +51,12 @@ header p {
 }
 
 .header-links {
-  position: absolute;
-  top: 0;
-  right: 0;
+  position: fixed;
+  top: 10px;
+  right: 10px;
   display: flex;
   gap: 16px;
+  z-index: 100;
 }
 
 .header-links a,
@@ -465,6 +466,7 @@ input[type="range"] {
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  width: 100%;
 }
 
 .canvas-container canvas,
@@ -497,8 +499,10 @@ input[type="range"] {
 }
 
 #preview-512 {
-  width: 512px;
-  height: 512px;
+  width: 100%;
+  max-width: 512px;
+  height: auto;
+  aspect-ratio: 1;
 }
 
 #preview-64 {
@@ -700,25 +704,20 @@ input[type="range"] {
     max-width: 512px;
     height: auto;
   }
-}
 
-@media (max-width: 600px) {
   header {
-    text-align: center;
+    text-align: left;
   }
 
   header h1 {
     font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  header h1 {
     margin-top: 50px;
   }
-
-  .header-links {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 100;
-  }
-
   .preview-canvases {
     flex-direction: column;
     align-items: center;
@@ -748,14 +747,6 @@ input[type="range"] {
     margin-bottom: 4px;
   }
 
-  /* Make preview responsive */
-  #preview-512 {
-    width: 100%;
-    max-width: 100%;
-    height: auto;
-    aspect-ratio: 1;
-  }
-  
   /* Fallback for browsers without aspect-ratio support */
   @supports not (aspect-ratio: 1) {
     #preview-512 {
