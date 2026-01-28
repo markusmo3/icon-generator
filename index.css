@@ -755,6 +755,14 @@ input[type="range"] {
     height: auto;
     aspect-ratio: 1;
   }
+  
+  /* Fallback for browsers without aspect-ratio support */
+  @supports not (aspect-ratio: 1) {
+    #preview-512 {
+      height: 100vw;
+      max-height: 100%;
+    }
+  }
 
   .canvas-container.main .preview-svg {
     width: 100%;
